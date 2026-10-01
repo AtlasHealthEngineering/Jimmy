@@ -1,5 +1,5 @@
 #define MyAppName "Jimmy Bridge"
-#define MyAppVersion "0.4.5"
+#define MyAppVersion "0.4.6"
 #define MyAppPublisher "KnowAtlas"
 [Setup]
 AppId={{A7D9D78B-33F2-4F5E-9D2E-1B39EBD44D51}
@@ -10,7 +10,7 @@ DefaultDirName={localappdata}\JimmyBridge
 DefaultGroupName=Jimmy Bridge
 PrivilegesRequired=lowest
 DisableProgramGroupPage=yes
-OutputDir=output-045
+OutputDir=output-046
 OutputBaseFilename=Jimmy Bridge Setup
 Compression=lzma2
 SolidCompression=yes
@@ -26,6 +26,8 @@ Source: "..\uninstall.ps1"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\support-check.ps1"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
+Name: "{group}\Jimmy"; Filename: "powershell.exe"; Parameters: "-NoProfile -STA -ExecutionPolicy Bypass -File ""{app}\src\jimmy-chat.ps1"""
+Name: "{userdesktop}\Jimmy"; Filename: "powershell.exe"; Parameters: "-NoProfile -STA -ExecutionPolicy Bypass -File ""{app}\src\jimmy-chat.ps1"""
 Name: "{group}\Jimmy Support Check"; Filename: "powershell.exe"; Parameters: "-NoProfile -STA -ExecutionPolicy Bypass -File ""{app}\support-check.ps1"""
 Name: "{group}\Antigravity"; Filename: "{localappdata}\Programs\antigravity\Antigravity.exe"; Check: FileExists(ExpandConstant('{localappdata}\Programs\antigravity\Antigravity.exe'))
 
