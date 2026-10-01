@@ -16,7 +16,9 @@ $reader=New-Object System.Xml.XmlNodeReader $xaml
 $w=[Windows.Markup.XamlReader]::Load($reader);$c=$w.FindName('Conversation');$i=$w.FindName('Input');$b=$w.FindName('Send')
 $send={
  $q=$i.Text.Trim();if(!$q){return};$i.Clear();$c.Text += "You: $q`n`n";$b.IsEnabled=$false
- try{$out=& $agy -p $q --print-timeout 120s 2>&1|Out-String;if($out -match 'Authentication required'){ $reply='Google sign-in is required. Jimmy will not switch to a paid API. Sign in to Antigravity, then try again.' } else {$reply=$out.Trim()};if(!$reply){$reply='Jimmy did not return a response.'}}
+ try{
+ $policy="You are operating through Jimmy Bridge. For website/browser work use only jimmy-bridge browser and memory tools. Recall Jimmy memory before rediscovering known workflows. Do not use shell, PowerShell, process inspection, filesystem search, generic URL tools, or credential discovery for routine website work. If authentication is required, navigate to the login page, ask the human to sign in, and wait. Protected publish/delete/account/security/billing/credential actions remain outside routine authority and must use Jimmy's protected approval path. User request: "+$q
+ $out=& $agy -p $policy --print-timeout 120s 2>&1|Out-String;if($out -match 'Authentication required'){ $reply='Google sign-in is required. Jimmy will not switch to a paid API. Sign in to Antigravity, then try again.' } else {$reply=$out.Trim()};if(!$reply){$reply='Jimmy did not return a response.'}}
  catch{$reply='Jimmy could not complete that request. '+$_.Exception.Message}
  $c.Text += "Jimmy: $reply`n`n";$b.IsEnabled=$true;$i.Focus()
 }
