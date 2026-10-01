@@ -1,0 +1,15 @@
+{
+  "name": "jimmy-bridge",
+  "version": "0.4.5",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node test/contract.test.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.17.5",
+    "playwright": "^1.55.0",
+    "zod": "^3.25.76"
+  }
+}
