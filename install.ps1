@@ -54,6 +54,30 @@ $addCode=$LASTEXITCODE
 $ErrorActionPreference=$oldEap
 if($removeCode -ne 0){ throw 'Jimmy could not refresh its Antigravity registration.' }
 if($addCode -ne 0){ throw 'Jimmy could not register with Antigravity.' }
+# Pre-govern only Jimmy's routine MCP capabilities. Never grant generic command/file authority
+# and never auto-approve protected publication capabilities.
+$settingsDir=Join-Path $HOME '.gemini\antigravity-cli'
+$settingsPath=Join-Path $settingsDir 'settings.json'
+New-Item -ItemType Directory -Force -Path $settingsDir | Out-Null
+try {
+  if(Test-Path $settingsPath){ $settings=Get-Content $settingsPath -Raw | ConvertFrom-Json } else { $settings=[pscustomobject]@{} }
+  if(!$settings.permissions){ $settings | Add-Member -NotePropertyName permissions -NotePropertyValue ([pscustomobject]@{}) }
+  $routine=@(
+    'mcp(jimmy-bridge/browser_open)','mcp(jimmy-bridge/browser_inspect)',
+    'mcp(jimmy-bridge/browser_set_field)','mcp(jimmy-bridge/browser_safe_action)',
+    'mcp(jimmy-bridge/browser_verify)','mcp(jimmy-bridge/browser_close)',
+    'mcp(jimmy-bridge/memory_remember)','mcp(jimmy-bridge/memory_recall)',
+    'mcp(jimmy-bridge/memory_outcome)','mcp(jimmy-bridge/memory_forget)'
+  )
+  $protected=@('mcp(jimmy-bridge/request_publish)','mcp(jimmy-bridge/publish_status)','mcp(jimmy-bridge/execute_approved_publish)')
+  $allow=@($settings.permissions.allow | Where-Object { $_ -and $_ -ne 'mcp(jimmy-bridge/*)' -and $_ -notin $protected })
+  $allow=@($allow + $routine | Select-Object -Unique)
+  if($settings.permissions.PSObject.Properties.Name -contains 'allow'){ $settings.permissions.allow=$allow } else { $settings.permissions | Add-Member -NotePropertyName allow -NotePropertyValue $allow }
+  $ask=@($settings.permissions.ask | Where-Object { $_ })
+  $ask=@($ask + $protected | Select-Object -Unique)
+  if($settings.permissions.PSObject.Properties.Name -contains 'ask'){ $settings.permissions.ask=$ask } else { $settings.permissions | Add-Member -NotePropertyName ask -NotePropertyValue $ask }
+  $settings | ConvertTo-Json -Depth 20 | Set-Content -Path $settingsPath -Encoding UTF8
+} catch { throw ('Jimmy could not establish its governed Antigravity permissions: '+$_.Exception.Message) }
 Start-Process powershell.exe -ArgumentList @('-NoProfile','-STA','-WindowStyle','Hidden','-ExecutionPolicy','Bypass','-File',$helper)
 $ErrorActionPreference='Continue'
 $authOutput=(& $agy models 2>&1 | Out-String)
