@@ -1,0 +1,47 @@
+name: Publish Jimmy v0.4.5
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/publish-v045.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      EXPECTED_SHA256: DF488B6ACEE1F7E7A8687A8FC5487E50B16D04C4E8448BEEA1B61EF3F1D31647
+      ASSET: Jimmy-Bridge-Setup-v0.4.5.exe
+      SOURCE_URL: https://buffer-latitude-knight-promotes.trycloudflare.com/jimmy-0.4.5
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fetch exact verified installer
+        run: |
+          curl --fail --location --retry 5 --retry-delay 2 "$SOURCE_URL" --output "$ASSET"
+          ACTUAL="$(sha256sum "$ASSET" | awk '{print toupper($1)}')"
+          test "$ACTUAL" = "$EXPECTED_SHA256"
+          test "$(stat -c%s "$ASSET")" = "28976249"
+      - name: Bind v0.4.5 tag to canonical release source
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -f -a v0.4.5 "$GITHUB_SHA" -m "Jimmy Bridge v0.4.5 private beta"
+          git push --force origin refs/tags/v0.4.5
+      - name: Create private-beta release and upload installer
+        run: |
+          gh release delete v0.4.5 --yes --cleanup-tag=false 2>/dev/null || true
+          gh release create v0.4.5 "$ASSET#Jimmy Bridge Setup v0.4.5" --title "Jimmy Bridge v0.4.5 — Private Beta" --notes "Verified private-beta installer. SHA-256: $EXPECTED_SHA256" --prerelease --verify-tag
+      - name: Independent release read-back
+        run: |
+          rm -f "$ASSET"
+          mkdir readback
+          gh release download v0.4.5 --pattern "$ASSET" --dir readback
+          ACTUAL="$(sha256sum "readback/$ASSET" | awk '{print toupper($1)}')"
+          test "$ACTUAL" = "$EXPECTED_SHA256"
+          test "$(stat -c%s "readback/$ASSET")" = "28976249"
+          echo "RELEASE_READBACK_VERIFIED $ACTUAL"
