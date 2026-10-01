@@ -1,0 +1,10 @@
+node_modules/
+runtime/
+installer/output/
+installer/output-*/
+*.exe
+*.log
+.env
+.env.*
+!.env.example
+*.pre-e2e-*
