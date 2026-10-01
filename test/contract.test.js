@@ -5,4 +5,12 @@ for(const name of must)if(!src.includes('server.tool("'+name+'"'))throw new Erro
 if(/CONFIRM_PUBLISH|challenge:z/.test(src))throw new Error("model-visible publish secret remains");
 if(!src.includes("independent_human_approval_required"))throw new Error("human approval guard missing");
 if(!src.includes("browser_session_mismatch"))throw new Error("session binding missing");
-console.log("CONTRACT_V03_PASS",must.join(","));
+const boundary=[
+  'reason:"no_pending_publish"',
+  'reason:"approval_expired"',
+  'reason:"browser_session_mismatch"',
+  'reason:"independent_human_approval_required"',
+  'a.id!==pending.id','a.session!==pending.session','a.decision!=="approve"','a.expires<=Date.now()'
+];
+for(const guard of boundary)if(!src.includes(guard))throw new Error("protected boundary guard missing: "+guard);
+console.log("CONTRACT_V046_PASS",must.join(","));
