@@ -1,0 +1,13 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Jimmy Builder Lab</title></head><body>
+<h1>Website Builder</h1><nav><button id="home">Homepage</button><button id="about">About</button></nav>
+<section aria-label="Hero section"><h2>Hero</h2><label>Headline <input id="headline" value="Original Headline"></label>
+<label>Body <textarea id="body">Original body copy.</textarea></label></section>
+<section aria-label="Actions"><button id="preview">Preview</button><button id="save">Save Draft</button>
+<button id="publish">Publish</button><button id="delete">Delete Page</button></section>
+<div id="status" role="status">Unsaved</div><div id="previewPane" hidden><h2 id="previewHeadline"></h2><p id="previewBody"></p></div>
+<script>
+const q=s=>document.querySelector(s), headline=q('#headline'), body=q('#body'), statusEl=q('#status');
+q('#preview').addEventListener('click',()=>{q('#previewHeadline').textContent=headline.value;q('#previewBody').textContent=body.value;q('#previewPane').hidden=false;statusEl.textContent='Preview ready'});
+q('#save').addEventListener('click',()=>{localStorage.setItem('draft',JSON.stringify({headline:headline.value,body:body.value}));statusEl.textContent='Draft saved'});
+q('#publish').addEventListener('click',()=>{localStorage.setItem('published',JSON.stringify({headline:headline.value,body:body.value}));statusEl.textContent='Published'});
+</script></body></html>
