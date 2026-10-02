@@ -8,6 +8,8 @@ const root=path.join(os.homedir(),".jimmy-bridge");
 const profile=path.join(root,"chrome-profile");
 const port=9323, endpoint="http://127.0.0.1:"+port;
 const candidates=[
+ "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+ "/Applications/Chromium.app/Contents/MacOS/Chromium",
  "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
  "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
  path.join(process.env.LOCALAPPDATA||"","Google","Chrome","Application","chrome.exe"),
