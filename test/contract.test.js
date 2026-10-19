@@ -21,4 +21,5 @@ const protectedWords=protectedMatch[1].split("|");
 for(const word of ["publish","delete","destroy","billing","password","security","credential","account","purchase","checkout","payment","transfer","withdraw"])if(!protectedWords.includes(word))throw new Error("protected action weakened: "+word);
 if(!src.includes('reason:"protected_field"') || !src.includes("SENSITIVE_FIELD.test(meta)"))throw new Error("account/security/payment fields must be blocked");
 if(protectedWords.includes("remove"))throw new Error("reversible draft removal incorrectly protected");
+if(!src.includes('reason:"content_changed_after_approval"')||!src.includes("pending.fields")||!src.includes("p.url()!==pending.url"))throw new Error("publish approval must bind current form and page state");
 console.log("CONTRACT_V046_PASS",must.join(","));
