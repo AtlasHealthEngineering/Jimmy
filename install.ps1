@@ -1,4 +1,4 @@
-param([switch]$NoConsentUI)
+param([switch]$NoConsentUI,[switch]$ConsentGranted)
 $ErrorActionPreference='Stop'
 $root=Split-Path -Parent $MyInvocation.MyCommand.Path
 $helper=Join-Path $root 'src\approval-helper.ps1'
@@ -50,6 +50,8 @@ if(Test-Path $consentPath){
 }
 if(!$hasConsent){
   if($NoConsentUI -or ![Environment]::UserInteractive){ throw 'Jimmy requires one-time interactive browser authorization during setup. Silent/headless setup cannot grant consent.' }
+  $authorized=[bool]$ConsentGranted
+  if(!$authorized){
   Add-Type -AssemblyName System.Windows.Forms
   $explanation=@(
     'Authorize Jimmy for routine website work on this Windows account?'
@@ -63,7 +65,9 @@ if(!$hasConsent){
   $decision=[System.Windows.Forms.MessageBox]::Show($explanation,'Jimmy - One-time browser authorization',
     [System.Windows.Forms.MessageBoxButtons]::YesNo,[System.Windows.Forms.MessageBoxIcon]::Information,
     [System.Windows.Forms.MessageBoxDefaultButton]::Button2)
-  if($decision -ne [System.Windows.Forms.DialogResult]::Yes){ throw 'Jimmy browser authorization was declined. Routine MCP tools were not enrolled.' }
+  $authorized=($decision -eq [System.Windows.Forms.DialogResult]::Yes)
+  }
+  if(!$authorized){ throw 'Jimmy browser authorization was declined. Routine MCP tools were not enrolled.' }
   New-Item -ItemType Directory -Force -Path $consentDir | Out-Null
   $receipt=[pscustomobject]@{scope=$consentScope;decision='allow';userSid=$userSid;consentedUtc=[DateTime]::UtcNow.ToString('o')}
   [IO.File]::WriteAllText($consentPath,($receipt|ConvertTo-Json -Depth 4),[Text.UTF8Encoding]::new($false))
@@ -95,7 +99,7 @@ $settingsDir=Join-Path $HOME '.gemini\antigravity-cli'
 $settingsPath=Join-Path $settingsDir 'settings.json'
 New-Item -ItemType Directory -Force -Path $settingsDir | Out-Null
 try {
-  if(Test-Path $settingsPath){ $settings=Get-Content $settingsPath -Raw | ConvertFrom-Json } else { $settings=[pscustomobject]@{} }
+  if(Test-Path $settingsPath){ $settings=Get-Content $settingsPath -Raw -Encoding UTF8 | ConvertFrom-Json } else { $settings=[pscustomobject]@{} }
   if(!$settings.permissions){ $settings | Add-Member -NotePropertyName permissions -NotePropertyValue ([pscustomobject]@{}) }
   $routine=@(
     'mcp(jimmy-bridge/browser_open)','mcp(jimmy-bridge/browser_inspect)',
