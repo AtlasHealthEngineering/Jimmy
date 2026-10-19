@@ -32,7 +32,15 @@ Name: "{group}\Jimmy Support Check"; Filename: "powershell.exe"; Parameters: "-N
 Name: "{group}\Antigravity"; Filename: "{localappdata}\Programs\antigravity\Antigravity.exe"; Check: FileExists(ExpandConstant('{localappdata}\Programs\antigravity\Antigravity.exe'))
 
 [Run]
-Filename: "powershell.exe"; Parameters: "-NoProfile -STA -ExecutionPolicy Bypass -File ""{app}\install.ps1"""; Flags: waituntilterminated; StatusMsg: "Getting Jimmy ready..."
+Filename: "powershell.exe"; Parameters: "-NoProfile -STA -ExecutionPolicy Bypass -File ""{app}\install.ps1"" {code:GetConsentMode}"; Flags: waituntilterminated; StatusMsg: "Getting Jimmy ready..."
 
 [UninstallRun]
 Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\uninstall.ps1"""; Flags: runhidden waituntilterminated; RunOnceId: "JimmyBridgeUninstall"
+
+[Code]
+// Silent/automated setup cannot create one-time human consent.
+function GetConsentMode(Param: String): String;
+begin
+  if WizardSilent then Result := '-NoConsentUI'
+  else Result := '';
+end;
