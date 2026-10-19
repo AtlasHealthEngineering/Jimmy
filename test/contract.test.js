@@ -22,4 +22,5 @@ for(const word of ["publish","delete","destroy","billing","password","security",
 if(!src.includes('reason:"protected_field"') || !src.includes("SENSITIVE_FIELD.test(meta)"))throw new Error("account/security/payment fields must be blocked");
 if(protectedWords.includes("remove"))throw new Error("reversible draft removal incorrectly protected");
 if(!src.includes('reason:"content_changed_after_approval"')||!src.includes("pending.fields")||!src.includes("p.url()!==pending.url"))throw new Error("publish approval must bind current form and page state");
+if(!src.includes('value:sensitive(e)?"[REDACTED]"') || !src.includes('one.?time') || !src.includes('cc-'))throw new Error("sensitive input inspection redaction missing");
 console.log("CONTRACT_V046_PASS",must.join(","));
