@@ -8,7 +8,7 @@ Remove-Item $consentPath -Force -ErrorAction SilentlyContinue
 $settingsPath=Join-Path $HOME '.gemini\antigravity-cli\settings.json'
 if(Test-Path $settingsPath){
   try {
-    $settings=Get-Content $settingsPath -Raw | ConvertFrom-Json
+    $settings=Get-Content $settingsPath -Raw -Encoding UTF8 | ConvertFrom-Json
     if($settings.permissions){
       foreach($key in @('allow','ask')){
         if($settings.permissions.PSObject.Properties.Name -contains $key){
