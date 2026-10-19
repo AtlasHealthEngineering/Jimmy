@@ -1,3 +1,4 @@
+param([switch]$NoConsentUI)
 $ErrorActionPreference='Stop'
 $root=Split-Path -Parent $MyInvocation.MyCommand.Path
 $helper=Join-Path $root 'src\approval-helper.ps1'
@@ -48,14 +49,14 @@ if(Test-Path $consentPath){
   } catch { $hasConsent=$false }
 }
 if(!$hasConsent){
-  if(![Environment]::UserInteractive){ throw 'Jimmy requires one-time interactive browser authorization during setup. Silent/headless setup cannot grant consent.' }
+  if($NoConsentUI -or ![Environment]::UserInteractive){ throw 'Jimmy requires one-time interactive browser authorization during setup. Silent/headless setup cannot grant consent.' }
   Add-Type -AssemblyName System.Windows.Forms
   $explanation=@(
     'Authorize Jimmy for routine website work on this Windows account?'
     ''
     'Jimmy may open and inspect sites, navigate, edit ordinary fields, preview, save drafts and remember workflows without asking again. Those actions may change drafts or other non-published data on websites where you are signed in.'
     ''
-    'Jimmy CANNOT publish, delete, change billing/security or credentials, or make purchases without a separate approval. Website sign-in or MFA may still be necessary.'
+    'Publishing requires a separate independent local-human approval. Deletion, purchases, billing, account/security and credential changes remain blocked. Website sign-in or MFA may still be necessary.'
     ''
     'Choose Yes to authorize. No cancels setup.'
   ) -join [Environment]::NewLine
