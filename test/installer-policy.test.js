@@ -26,6 +26,10 @@ assert.ok(installer.includes("MessageBoxButtons]::YesNo"),"consent requires expl
 assert.ok(installer.includes("MessageBoxDefaultButton]::Button2"),"No must be the default choice");
 assert.ok(installer.includes("if($NoConsentUI -or ![Environment]::UserInteractive)"),"noninteractive setup must not grant consent");
 assert.ok(spec.includes("WizardSilent") && spec.includes("-NoConsentUI"),"silent installer must disable consent UI");
+assert.ok(spec.includes("function InitializeSetup()") && spec.includes("MB_DEFBUTTON2") && spec.includes("Result := False"),"installer must deny declined consent before extraction");
+assert.ok(spec.includes("-ConsentGranted") && installer.includes("[switch]$ConsentGranted"),"installer must pass one-time native consent to setup");
+assert.ok(installer.includes("Get-Content $settingsPath -Raw -Encoding UTF8"),"installer must read existing Unicode settings");
+assert.ok(uninstaller.includes("Get-Content $settingsPath -Raw -Encoding UTF8"),"uninstaller must preserve Unicode settings");
 assert.ok(uninstaller.includes("Remove-Item $consentPath") && uninstaller.includes("$_ -notmatch '^mcp\\(jimmy-bridge/'"),"uninstall must revoke consent and tool grants");
 assert.ok(chat.includes("--model gemini-3.8-flash-low -p $policy"),"chat must choose the verified browser-capable model");
 assert.ok(!chat.includes("dangerously-skip-permissions"),"chat may not bypass policy");
@@ -52,7 +56,7 @@ if(process.platform==="win32"){
     return execFileSync("powershell.exe",["-NoProfile","-NonInteractive","-Command",ps],{timeout:180000,stdio:"pipe"});
   };
   try {
-    const before={permissions:{
+    const before={profile:{displayName:"José 🌸",preferences:{region:"München",key:"中文"}},permissions:{
       allow:["mcp(other-plugin/inspect)"],
       ask:["mcp(jimmy-bridge/browser_open)","mcp(jimmy-bridge/execute_approved_publish)","mcp(other-plugin/publish)"],
       deny:["read_file(*)","command(*)"]
@@ -62,7 +66,9 @@ if(process.platform==="win32"){
     const bytes=fs.readFileSync(settingsPath);
     assert.equal(bytes[0],0x7b,"settings must begin with JSON, not BOM");
     assert.notDeepEqual([...bytes.subarray(0,3)],[0xef,0xbb,0xbf],"UTF-8 BOM rejected by Antigravity");
-    const actual=JSON.parse(bytes.toString("utf8")).permissions;
+    const complete=JSON.parse(bytes.toString("utf8"));
+    assert.deepEqual(complete.profile,before.profile,"Unicode and unrelated deep settings must survive rewrite");
+    const actual=complete.permissions;
     for(const tool of [...routine,...publish]){
       const rule="mcp(jimmy-bridge/"+tool+")";
       assert.ok(actual.allow.includes(rule),"not preauthorized: "+rule);
