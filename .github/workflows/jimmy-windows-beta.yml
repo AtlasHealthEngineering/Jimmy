@@ -47,7 +47,8 @@ jobs:
           }
           if (-not (Test-Path $iscc)) { throw 'Missing Inno Setup compiler' }
           New-Item -ItemType Directory -Path beta-output -Force | Out-Null
-          & $iscc '/Obeta-output' '/FJimmy-Bridge-Setup-v0.4.6-beta.2' 'installer\JimmyBridge.iss'
+          $outputPath = (Resolve-Path beta-output).Path
+          & $iscc ('/O' + $outputPath) '/FJimmy-Bridge-Setup-v0.4.6-beta.2' 'installer\JimmyBridge.iss'
           if ($LASTEXITCODE -ne 0) { throw 'Installer build failed' }
           $exe = 'beta-output\Jimmy-Bridge-Setup-v0.4.6-beta.2.exe'
           if (-not (Test-Path $exe)) { throw 'No installer emitted' }
@@ -72,7 +73,7 @@ jobs:
 
           Built on GitHub-hosted Windows runner directly from source SHA ${{ github.sha }}. Verify downloaded executable with the attached SHA256SUMS.txt before installation. Signed Windows publisher certificate is not yet configured, so Windows SmartScreen may show an unrecognized-publisher warning.
           '@
-          gh release create $tag 'beta-output\Jimmy-Bridge-Setup-v0.4.6-beta.2.exe' 'beta-output\SHA256SUMS.txt' --repo '${{ github.repository }}' --target '${{ github.sha }}' --title 'Jimmy Bridge v0.4.6 Beta 2 - recipient test' --notes $notes --prerelease --verify-tag=false
+          gh release create $tag 'beta-output\Jimmy-Bridge-Setup-v0.4.6-beta.2.exe' 'beta-output\SHA256SUMS.txt' --repo '${{ github.repository }}' --target '${{ github.sha }}' --title 'Jimmy Bridge v0.4.6 Beta 2 - recipient test' --notes $notes --prerelease
           if ($LASTEXITCODE -ne 0) { throw 'GitHub Release upload failed' }
           gh release view $tag --repo '${{ github.repository }}' --json tagName,assets,url
           if ($LASTEXITCODE -ne 0) { throw 'Published release readback failed' }
