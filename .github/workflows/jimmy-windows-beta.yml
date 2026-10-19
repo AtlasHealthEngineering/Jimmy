@@ -1,0 +1,79 @@
+name: Jimmy Windows beta download
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/jimmy-windows-beta.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: jimmy-windows-beta
+  cancel-in-progress: false
+
+jobs:
+  package-and-publish:
+    runs-on: windows-2025
+    timeout-minutes: 25
+    steps:
+      - name: Checkout immutable source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Install dependencies and execute Windows policy tests
+        shell: pwsh
+        run: |
+          npm install --omit=dev --ignore-scripts --no-audit --no-fund
+          if ($LASTEXITCODE -ne 0) { throw 'npm install failed' }
+          npm test
+          if ($LASTEXITCODE -ne 0) { throw 'Jimmy tests failed' }
+
+      - name: Build installer from this checked-out commit
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path runtime -Force | Out-Null
+          Copy-Item (Get-Command node.exe).Source runtime/node.exe -Force
+          $iscc = 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe'
+          if (-not (Test-Path $iscc)) {
+            choco install innosetup --yes --no-progress
+            if ($LASTEXITCODE -ne 0) { throw 'Cannot install Inno Setup' }
+          }
+          if (-not (Test-Path $iscc)) { throw 'Missing Inno Setup compiler' }
+          New-Item -ItemType Directory -Path beta-output -Force | Out-Null
+          $outputPath = (Resolve-Path beta-output).Path
+          & $iscc ('/O' + $outputPath) '/FJimmy-Bridge-Setup-v0.4.6-beta.2' 'installer\JimmyBridge.iss'
+          if ($LASTEXITCODE -ne 0) { throw 'Installer build failed' }
+          $exe = 'beta-output\Jimmy-Bridge-Setup-v0.4.6-beta.2.exe'
+          if (-not (Test-Path $exe)) { throw 'No installer emitted' }
+          $hash = (Get-FileHash $exe -Algorithm SHA256).Hash.ToLowerInvariant()
+          [IO.File]::WriteAllText('beta-output\SHA256SUMS.txt', ($hash + '  Jimmy-Bridge-Setup-v0.4.6-beta.2.exe' + [Environment]::NewLine), [Text.UTF8Encoding]::new($false))
+          Write-Host ('Installer SHA-256: ' + $hash)
+
+      - name: Create explicit private-beta download release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = 'v0.4.6-beta.2'
+          gh release view $tag --repo '${{ github.repository }}' *> $null
+          if ($LASTEXITCODE -eq 0) { throw 'Release tag already exists; refusing to overwrite' }
+          $notes = @'
+          Jimmy Bridge test build for Windows. This is a **pre-release** for recipient acceptance, not a general availability release.
+
+          First installation requests the Windows user's explicit one-time browser consent. After approval, ordinary browsing, editing, preview, and draft saving are preauthorized. Publishing remains subject to independent local-human approval. Payment, deletion, credential, and account-security changes remain blocked.
+
+          The installer must be launched interactively to capture new consent; silent first-time installation deliberately fails. Website login and MFA may still be required.
+
+          Built on GitHub-hosted Windows runner directly from source SHA ${{ github.sha }}. Verify downloaded executable with the attached SHA256SUMS.txt before installation. Signed Windows publisher certificate is not yet configured, so Windows SmartScreen may show an unrecognized-publisher warning.
+          '@
+          gh release create $tag 'beta-output\Jimmy-Bridge-Setup-v0.4.6-beta.2.exe' 'beta-output\SHA256SUMS.txt' --repo '${{ github.repository }}' --target '${{ github.sha }}' --title 'Jimmy Bridge v0.4.6 Beta 2 - recipient test' --notes $notes --prerelease
+          if ($LASTEXITCODE -ne 0) { throw 'GitHub Release upload failed' }
+          gh release view $tag --repo '${{ github.repository }}' --json tagName,assets,url
+          if ($LASTEXITCODE -ne 0) { throw 'Published release readback failed' }
