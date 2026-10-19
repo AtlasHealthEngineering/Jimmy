@@ -2,6 +2,23 @@
 
 When the user asks for website or browser work, use Jimmy Bridge tools as the primary and sufficient execution surface.
 
+## Setup consent and unattended routine operation
+
+During the first interactive installation, the Windows account holder explicitly approves
+routine browser authority. The default choice is No. The installer stores a scoped,
+user-bound consent receipt. Silent/headless setup cannot create this receipt.
+An upgrade can reuse a valid receipt; uninstall revokes it and Jimmy's own tool grants.
+
+After consent, Antigravity preauthorizes named Jimmy MCP tools, not wildcard or
+generic operating-system capabilities. Navigation, inspection, editing, preview,
+draft saving, verification, and operational memory need no repeated MCP approval.
+Website login, MFA and provider dialogs remain separate.
+
+The governed publish workflow tools may be called without an extra CLI prompt,
+but calling them cannot publish: the trusted local approval UI must supply
+a valid, short-lived, browser-session-bound human approval before any live effect.
+Deletion, purchases, billing, account/security and credential changes remain blocked.
+
 ## Routine, pre-governed work
 Use Jimmy's browser tools directly for:
 - opening and inspecting websites;
