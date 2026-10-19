@@ -52,7 +52,7 @@ if(process.platform==="win32"){
   const settingsPath=path.join(temp,"settings.json");
   const run=()=> {
     const escaped=settingsPath.replaceAll("'","''");
-    const ps="$ErrorActionPreference='Stop'; $settingsPath='"+escaped+"'; $settings=Get-Content -LiteralPath $settingsPath -Raw | ConvertFrom-Json; "+permissionsCode;
+    const ps="$ErrorActionPreference='Stop'; $settingsPath='"+escaped+"'; $settings=Get-Content -LiteralPath $settingsPath -Raw -Encoding UTF8 | ConvertFrom-Json; "+permissionsCode;
     return execFileSync("powershell.exe",["-NoProfile","-NonInteractive","-Command",ps],{timeout:180000,stdio:"pipe"});
   };
   try {
